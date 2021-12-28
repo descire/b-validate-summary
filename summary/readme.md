@@ -140,3 +140,65 @@ class Base {
   }
 }
 ```
+
+### 四、schema 实现
+
+&emsp;&emsp;schema 与之前调用方式的不同点在于：
+
+- 批量处理类型校验
+- 通过 schema 约定减少手动链式调用的繁琐
+
+```JavaScript
+export class Schema {
+  constructor(schema, options = {}) {
+    this.schema = schema;
+    this.options = options;
+  }
+
+  validate(values, callback) {
+    if (!isObject(values)) {
+      return;
+    }
+    const promises = [];
+    let errors = null;
+    // 根据 key 设置相应的 error 信息
+    function setError(key, error) {
+      if (!errors) {
+        errors = {};
+      }
+      if (!errors[key] || error.requiredError) {
+        errors[key] = error;
+      }
+    }
+    if (this.schema) {
+      Object.keys(this.schema).forEach((key) => {
+        if (isArray(this.schema[key])) {
+          for (let i = 0; i < this.schema[key].length; i++) {
+            const rule = this.schema[key][i];
+            const type = rule.type;
+            const message = rule.message;
+            // 省略部分代码
+          }
+        }
+      });
+    }
+    // 省略部分代码
+    callback && callback(errors);
+  }
+}
+```
+
+&emsp;&emsp;在有 schema 约定的前提下，内部执行代码可以自动遍历每一条规则，通过 collect 方法获取到 this.error 信息，最终调用 setError 方法整合成校验结果数组。
+
+### 五、总结
+
+&emsp;&emsp;本文重点如下：
+
+- 类型校验的核心流程
+- 基于继承来扩展不同数据结构的校验规则类
+- 基于 this 作用域实现链式调用
+- 通过 schema 的设计优化批量数据校验场景下的校验流程
+
+&emsp;&emsp;另外，对于数据类型校验库感兴趣的同学，千万不要错过 joi 这个库。
+
+&emsp;&emsp;最后，**如果本文对您有帮助，欢迎点赞、收藏、分享**。
